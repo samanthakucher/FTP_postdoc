@@ -131,9 +131,17 @@ def process_images_by_ftp(measurements_path, folder_name, ftp_im_path, masked=Tr
         mask_resized = mask[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
         mask_data_array = xr.DataArray(mask_resized, dims = ('x', 'y'))
         mask_data_array.to_netcdf(measurements_path + 'mask.nc')
+    else:
+        mask = 0
 
 
-    def_files = natsorted(glob.glob(os.path.join(ftp_im_path, '*.tiff')), key=lambda y: y.lower())
+    def_files = natsorted(glob.glob(os.path.join(ftp_im_path, '*.bmp')), key=lambda y: y.lower())
+
+    # MODIFICAR !!
+    # def_files_cut = def_files[8873:]
+    # def_files_cut.insert(0, def_files[0])
+    # def_files = def_files_cut
+
     N_defs = len(def_files)
 
 

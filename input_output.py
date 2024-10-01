@@ -38,7 +38,7 @@ def generate_average_gray_and_reference_images(measurements_path, cut=False):
     t1 = time.time()
 
     logger.info('Creating average gray image')
-    gri_files = sorted(glob.glob(os.path.join(measurements_path, 'gray', '*.tiff')))
+    gri_files = sorted(glob.glob(os.path.join(measurements_path, 'gray', '*.bmp')))
 
     image0 = sio.imread(gri_files[0])
     if 'cut'==True:
@@ -60,7 +60,7 @@ def generate_average_gray_and_reference_images(measurements_path, cut=False):
     np.save(measurements_path+'gray', gri_average)
 
     logger.info('Creating average reference image')
-    ref_files = sorted(glob.glob(os.path.join(measurements_path, 'reference', '*.tiff')))
+    ref_files = sorted(glob.glob(os.path.join(measurements_path, 'reference', '*.bmp')))
     Nref = len(ref_files)
     acum_ref = np.zeros((Slin, Scol))
     for kk in range(Nref):

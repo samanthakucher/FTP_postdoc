@@ -26,7 +26,8 @@ def analyze_with_ftp_and_save_to_nc(slice_index, args):
     dphase = unwrap(dphase)
 
     dphase = dphase - dphase0
-    height = height_map_from_phase_map(dphase, L, D, pspp)
+    #height = height_map_from_phase_map(dphase, L, D, pspp)
+    height = dphase
     h = xr.DataArray(height[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx], dims=["x", "y"])
     h.to_netcdf(ftp_nc_path + str(slice_index) + '.nc')
 
@@ -38,7 +39,7 @@ def perform_fft2_per_frame_and_keep_solid_lines(kk, args):
 
     height = xr.open_dataarray(height_fields_files[kk]).values
 
-    matrix = height*error_function
+    matrix = height#*error_function
     new = 10
     m = np.fft.fftshift(np.fft.fft2(matrix, (matrix.shape[0]+2*new, matrix.shape[1]+2*new)))
     m = m[new: m.shape[0]-new, new: m.shape[1]-new]

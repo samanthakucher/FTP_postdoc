@@ -140,9 +140,13 @@ def perform_fft_and_save_planes_solid(measurements_path, folder_name, periodicit
         iteration_time.append(tf)
 
 
-    plane_GX = np.abs(np.fft.fftshift(np.fft.fft(plane_GX, axis=1), axes=1))
-    plane_XM = np.abs(np.fft.fftshift(np.fft.fft(plane_XM, axis=1), axes=1))
-    plane_MG = np.abs(np.fft.fftshift(np.fft.fft(plane_MG, axis=1), axes=1))
+    # plane_GX = np.abs(np.fft.fftshift(np.fft.fft(plane_GX, axis=1), axes=1))
+    # plane_XM = np.abs(np.fft.fftshift(np.fft.fft(plane_XM, axis=1), axes=1))
+    # plane_MG = np.abs(np.fft.fftshift(np.fft.fft(plane_MG, axis=1), axes=1))
+
+    plane_GX = np.fft.fftshift(np.fft.fft(plane_GX, axis=1), axes=1)
+    plane_XM = np.fft.fftshift(np.fft.fft(plane_XM, axis=1), axes=1)
+    plane_MG = np.fft.fftshift(np.fft.fft(plane_MG, axis=1), axes=1)
 
     fmax = 20
     frequencies = np.fft.fftfreq(N, 1/fps)
