@@ -35,7 +35,7 @@ rc('ytick',  labelsize=fs)
 rc('lines',  markersize=7)
 mpl.rcParams['font.family'] = ['serif']
 mpl.rcParams['font.serif'] = ['Times New Roman']+ mpl.rcParams['font.serif']
-mpl.rcParams["mathtext.fontset"] = "stix"
+#mpl.rcParams["mathtext.fontset"] = "stix"
 
 import multiprocessing
 # multiprocessing.set_start_method("fork")
@@ -101,13 +101,19 @@ def perform_fft_and_save_planes_solid(measurements_path, folder_name, periodicit
     kx = 2*np.pi*np.fft.fftshift(np.fft.fftfreq(Slin, pixel_size))
 
     # Bragg wavenumber
-    KB = 2*np.pi/periodicity
+    #KB = 2*np.pi/periodicity
+    KB = np.pi/periodicity
     idx_kxB = find_nearest(kx, KB)
     kxB = kx[idx_kxB]
 
     plane_GX = np.zeros((Slin, N), dtype='c16')
     plane_XM = np.zeros((Slin, N), dtype='c16')
     plane_MG = np.zeros((Slin, N), dtype='c16')
+
+    # # If Slin is even
+    # plane_GX = np.zeros((Slin-1, N), dtype='c16')
+    # plane_XM = np.zeros((Slin-1, N), dtype='c16')
+    # plane_MG = np.zeros((Slin-1, N), dtype='c16')
 
 
     t1 = time.time()
@@ -122,7 +128,7 @@ def perform_fft_and_save_planes_solid(measurements_path, folder_name, periodicit
     # Paralellized
     iteration_time = []
     for j in tqdm(range(int(N/N_vertical_slices))):
-        non_iterable_args = height_fields_files, error_function, Scol, idx_kxB 
+        non_iterable_args = height_fields_files, error_function, Scol, idx_kxB, pixel_size 
 
         ti = time.time() 
         p = Pool(cores)
@@ -144,9 +150,9 @@ def perform_fft_and_save_planes_solid(measurements_path, folder_name, periodicit
     # plane_XM = np.abs(np.fft.fftshift(np.fft.fft(plane_XM, axis=1), axes=1))
     # plane_MG = np.abs(np.fft.fftshift(np.fft.fft(plane_MG, axis=1), axes=1))
 
-    plane_GX = np.fft.fftshift(np.fft.fft(plane_GX, axis=1), axes=1)
-    plane_XM = np.fft.fftshift(np.fft.fft(plane_XM, axis=1), axes=1)
-    plane_MG = np.fft.fftshift(np.fft.fft(plane_MG, axis=1), axes=1)
+    plane_GX = np.fft.fftshift(np.fft.fft(plane_GX, axis=1), axes=1)*(1/fps)
+    plane_XM = np.fft.fftshift(np.fft.fft(plane_XM, axis=1), axes=1)*(1/fps)
+    plane_MG = np.fft.fftshift(np.fft.fft(plane_MG, axis=1), axes=1)*(1/fps)
 
     fmax = 20
     frequencies = np.fft.fftfreq(N, 1/fps)
@@ -177,6 +183,7 @@ def perform_fft_and_save_planes_solid(measurements_path, folder_name, periodicit
     plt.title('Fourier Transform')
     plt.grid()
     plt.show()
+
 
 
     plt.figure()

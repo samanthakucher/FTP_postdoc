@@ -31,9 +31,10 @@ def gerchberg2d(interferogram, mask_where_fringes_are, N_iter_max):
     mean =  maxInd[0][index_mean]
     sigma = np.sum(y*(x-mean)**2)/n
     try:
-        popt, pcov = curve_fit(gaus, x, y, p0 = [y[index_mean], mean, sigma],maxfev=1100)
+        #popt, pcov = curve_fit(gaus, x, y, p0 = [y[index_mean], mean, sigma],maxfev=1100)
 
-        # popt, pcov = curve_fit(gaus, x, y, p0 = [1, mean, sigma],maxfev=1100)
+        popt, pcov = curve_fit(gaus, x, y,maxfev=1100)
+        #popt, pcov = curve_fit(gaus, x, y, p0 = [1, mean, sigma],maxfev=1100)
     except:
         popt, pcov = curve_fit(gaus, x, y,maxfev=1100)
     '''
@@ -56,7 +57,7 @@ def gerchberg2d(interferogram, mask_where_fringes_are, N_iter_max):
     '''
 
     k0x, k0y = popt[1], 0
-    R_in_k_space = popt[2]#*2.5
+    R_in_k_space = popt[2]*2.5
 
     kx, ky = np.meshgrid(range(int(S/2+1)), range(S))
 

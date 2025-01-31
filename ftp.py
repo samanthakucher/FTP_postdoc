@@ -3,7 +3,7 @@ import numpy.ma as ma
 from scipy import signal
 from unwrap import unwrap
 #from FTP_postdoc.fringe_extrapolation import gerchberg2d
-from fringe_extrapolation import gerchberg2d
+#from fringe_extrapolation import gerchberg2d
 
 import logging
 logging.basicConfig()
@@ -44,7 +44,7 @@ def calculate_phase_diff_map_1D(dY, dY0, th, ns, mask_for_unwrapping=None):
         HW=np.round(ifmax*th)
         #W=2*HW
         W=2*HW+1
-        win=signal.tukey(int(W),ns)
+        win=signal.windows.tukey(int(W),ns)
 
 
         #gaussfilt1D= np.zeros([1,nx])
@@ -88,7 +88,7 @@ def calculate_phase_diff_map_1D(dY, dY0, th, ns, mask_for_unwrapping=None):
     # dphase = unwrap(dphase)
     #dphase = dphase - np.min(dphase) - np.pi/2 
 
-    dphase = (dphase + np.pi) % (2 * np.pi) - np.pi
+    # dphase = (dphase + np.pi) % (2 * np.pi) - np.pi
     #dphase = np.arctan2(np.sin(dphase), np.cos(dphase))
 
 

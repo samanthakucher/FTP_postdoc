@@ -18,6 +18,8 @@ import dask.array as da
 
 from ftp import calculate_phase_diff_map_1D, height_map_from_phase_map
 from parallelized import analyze_with_ftp_and_save_to_nc
+from fringe_extrapolation import gerchberg2d
+
 
 
 from matplotlib import cm
@@ -116,14 +118,21 @@ def process_images_by_ftp(measurements_path, folder_name, ftp_im_path, masked=Tr
     Slin = lin_max_idx - lin_min_idx
     Scol = col_max_idx - col_min_idx
 
-    gray_resized = gray[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
-    gray_data_array = xr.DataArray(gray_resized, dims = ('x', 'y'))
+    # gray_resized = gray[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
+    # gray_data_array = xr.DataArray(gray_resized, dims = ('x', 'y'))
+    # gray_data_array.to_netcdf(measurements_path + 'gray.nc')
+
+    # ref_resized = ref[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
+    # ref_data_array = xr.DataArray(ref_resized, dims = ('x', 'y'))
+    # ref_data_array.to_netcdf(measurements_path + 'ref.nc')
+
+    gray = gray[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
+    gray_data_array = xr.DataArray(gray, dims = ('x', 'y'))
     gray_data_array.to_netcdf(measurements_path + 'gray.nc')
 
-    ref_resized = ref[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
-    ref_data_array = xr.DataArray(ref_resized, dims = ('x', 'y'))
+    ref = ref[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
+    ref_data_array = xr.DataArray(ref, dims = ('x', 'y'))
     ref_data_array.to_netcdf(measurements_path + 'ref.nc')
-
 
 
     if masked==True:
@@ -138,7 +147,7 @@ def process_images_by_ftp(measurements_path, folder_name, ftp_im_path, masked=Tr
     def_files = natsorted(glob.glob(os.path.join(ftp_im_path, '*.bmp')), key=lambda y: y.lower())
 
     # MODIFICAR !!
-    # def_files_cut = def_files[8873:]
+    # def_files_cut = def_files[5708:]
     # def_files_cut.insert(0, def_files[0])
     # def_files = def_files_cut
 
@@ -155,9 +164,15 @@ def process_images_by_ftp(measurements_path, folder_name, ftp_im_path, masked=Tr
 
     # 7. Generate (referece-gray) image.
     ref_m_gray = ref - resfactor*gray
+    if masked==True:
+        ref_m_gray = gerchberg2d(ref_m_gray, mask, N_iter_max)
+
 
     # Calculate wavelength of the projected pattern
-    line_ref = np.average(ref_m_gray, 0)
+    #line_ref = np.average(ref_m_gray, 0)
+    #line_ref = np.average(ref_m_gray[:400,:], 0) # to avoid the floater
+    #line_ref = np.average(ref_m_gray[20:-20,:], 0) # center of the channel
+    line_ref = np.average(ref_m_gray, 0) # center of the channel
     peaks, _ = find_peaks(line_ref, height=0)
 
     wavelength_pix = np.mean(np.diff(peaks))
@@ -171,15 +186,20 @@ def process_images_by_ftp(measurements_path, folder_name, ftp_im_path, masked=Tr
     # Supress mean of the first image to all of them
     def_image = sio.imread(def_files[0])
     def_image = def_image.astype(float)
+    def_image = def_image[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]
     def_m_gray = def_image - resfactor*gray
     
     if masked==True:
-        def_m_gray = def_m_gray*mask + ref_m_gray*(1-mask)
-        dphase0 = calculate_phase_diff_map_1D(def_m_gray, ref_m_gray, th, n, mask_for_unwrapping=(1-mask))
-        dphase0 = np.mean(ma.masked_array(dphase0, mask=(1-mask))[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx])
+        def_m_gray = def_m_gray*mask + ref_m_gray*(1-mask) # copypaste from ref
+        #def_m_gray = gerchberg2d(def_m_gray, mask, N_iter_max) # finge extrapolation
+        dphase0 = calculate_phase_diff_map_1D(def_m_gray, ref_m_gray, th, n)
+        #dphase0 = calculate_phase_diff_map_1D(def_m_gray, ref_m_gray, th, n, mask_for_unwrapping=(1-mask))
+        #dphase0 = np.mean(ma.masked_array(dphase0, mask=(1-mask))[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]) # masked
+        dphase0 = np.mean(dphase0[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]) 
     else:  
         dphase0 = calculate_phase_diff_map_1D(def_m_gray, ref_m_gray, th, n)
-        dphase0 = np.mean(dphase0[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]) 
+        dphase0 = np.mean(dphase0) 
+        #dphase0 = np.mean(dphase0[lin_min_idx:lin_max_idx,col_min_idx:col_max_idx]) 
 
     iteration_time = []
     for j in tqdm(range(int(N_defs/N_vertical_slices))):

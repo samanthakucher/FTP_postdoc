@@ -10,6 +10,8 @@ from natsort import natsorted
 import glob
 import os
 import yaml
+from skimage.filters import gaussian
+
 
 import matplotlib.pyplot as plt
 
@@ -18,8 +20,10 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 """ MASK + PADDING """
-xa,xb = 30,30
-xc,xd = 30,30
+#xa,xb = 30,30
+#xc,xd = 30,30
+
+xa = 0
 
 N_crop = 10
 
@@ -37,8 +41,8 @@ def set_fourier_domain(folder):
     #nx,ny = 2*(Nx//N_crop), 2*(Ny//N_crop)
 
     #if nx pair
-    h_map = h_map[:-1,:-1]
-    nx,ny = h_map.shape
+    #h_map = h_map[:-1,:-1]
+    #nx,ny = h_map.shape
     
     midx, midy = nx//2, ny//2
     
@@ -110,19 +114,31 @@ def spectre_2D(args):
     #ftp_nc_path, j, kx, ky, kxp, kyp, k_, dtheta, pix_ = args
     height_fields_files = natsorted(glob.glob(os.path.join(folder, '*.nc')), key=lambda y: y.lower())
     
+    # Calculate velocity after the gaussian filter
     h_map = xr.open_dataarray(height_fields_files[j]).values
+    # Add gaussian filter before performing 2DFFT
+    h_map = gaussian(h_map, 10)
+    #h0 = h_map
+
+    #h_map = xr.open_dataarray(height_fields_files[j+1]).values
+    # Add gaussian filter before performing 2DFFT
+    #h_map = gaussian(h_map, 10)
+    #h1 = h_map
+
+    #h_map = h1-h0
+
 
     nx,ny = h_map.shape
 
     #if nx pair
-    h_map = h_map[:-1,:-1]
-    nx,ny = h_map.shape
+    #h_map = h_map[:-1,:-1]
+    #nx,ny = h_map.shape
     
     
-    h_map[:xa,:] = 0
-    h_map[nx-xa:,:] = 0
-    h_map[:,:xa] = 0
-    h_map[:,ny-xa:] = 0
+    # h_map[:xa,:] = 0
+    # h_map[nx-xa:,:] = 0
+    # h_map[:,:xa] = 0
+    # h_map[:,ny-xa:] = 0
     
     h_map = h_map - np.mean(h_map)
     
@@ -152,7 +168,7 @@ def spectre_2D(args):
     
     # fft2 = scf.fft2( h_map_window_xy ) * pix_**2 # pour avoir la bonne unite dans la TF 2D
     # without window
-    fft2 = scf.fft2( h_map ) * pix_**2 # pour avoir la bonne unite dans la TF 2D
+    fft2 = scf.fft2( h_map_window_erf ) * pix_**2 # pour avoir la bonne unite dans la TF 2D
     fft2_shift = scf.fftshift( fft2 )
     
     #nx_c,ny_c = nx//N_crop, ny//N_crop # crop of the 2D fft 
@@ -175,8 +191,8 @@ def main(folder,folder_save, pix_):
     h_map = xr.open_dataarray(height_fields_files[0]).values
 
     #if nx pair
-    h_map = h_map[:-1,:-1]
-    nx,ny = h_map.shape
+    #h_map = h_map[:-1,:-1]
+    #nx,ny = h_map.shape
 
     hist, bin_edge = np.histogram(h_map, bins=50) # compute pdf size
     bin_center = (bin_edge[:-1]+bin_edge[1:])/2
@@ -196,7 +212,7 @@ def main(folder,folder_save, pix_):
     pool = multiprocessing.Pool(processes=num_processes)
     
     kx,ky,kxp,kyp,k_,dtheta = set_fourier_domain(folder)
-    items = [(folder, item_k, kx, ky, kxp, kyp, k_, dtheta,pix_) for item_k in range(0, N_images)]
+    items = [(folder, item_k, kx, ky, kxp, kyp, k_, dtheta,pix_) for item_k in range(0, N_images)] # velocity
     
     Nk = len(k_)
     dk = 2 * np.pi / (pix_ * 2 * Nk)
@@ -242,7 +258,7 @@ def save_lines_fft_averaged(measurements_path, folder_name):
     parameter_file = measurements_path + 'processing_parameters.yaml'
     ftp_proc_parameters = yaml.safe_load(open(parameter_file))
     pixel_size = ftp_proc_parameters['MEASUREMENT']['pixel_size']
-    pixel_size = pixel_size/1000
+    pixel_size = pixel_size #/1000
 
     dict_ = dict()
 
