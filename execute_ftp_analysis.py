@@ -25,26 +25,17 @@ masked = False
 periodicity= 40/1000                                    
 
 
-#measurements_path = '/Volumes/T7/2024-12-06/1Dchannel/'
-#measurements_path = '/Volumes/T7/2024-12-11/'
-measurements_path = '/Volumes/T7/2025-01-29/aprem/h1_6.0/' 
+measurements_path = '/Volumes/T7/2025-04-17/10mm/' 
 
-#folder_name = 'sweep-a100-f1-5-3min-2bat'
-#names = ['sweep-a100-f1-5-3min']#,
-names = ['a80-f3']#,
-#names = ['sweep-a80-f1-5-3min','sweep-a60-f1-5-3min']
-#         'sweep-a50-f1-6-3min-1bat-der',
-#         'sweep-a40-f1-6-3min-1bat-der',
-#         'sweep-a30-f1-6-3min-1bat-der']
 
-# names =['a80-f3'] 
+#folder_name = 'sweep-a100-f1-5-3min'
+names =['sweep-a60-f1-5-3min', 'sweep-a80-f1-5-3min', 'sweep-a100-f1-5-3min', 'sweep-a120-f1-5-3min', 'sweep-a140-f1-5-3min', 'sweep-a160-f1-5-3min', 'sweep-a180-f1-5-3min','sweep-a200-f1-5-3min', 'sweep-a220-f1-5-3min', 'sweep-a240-f1-5-3min'] 
 
-#fs = np.arange(1,21)
-
-#hs = np.arange(14,16,1)
+names = ['sweep-a60-f1-5-3min', 'sweep-a100-f1-5-3min']
 
 ii = 0
 for folder_name in names:
+    #measurements_path = '/Volumes/T7/2025-01-30/h1_' + str(h1) + '/' 
     #for ii in range(len(hs)):
     #big_folder_name = str(hs[ii]) + 'mm'
     #for f in fs:

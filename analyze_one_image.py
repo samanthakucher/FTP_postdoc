@@ -23,6 +23,7 @@ from input_output import generate_average_gray_and_reference_images
 from bulk_processing import process_images_by_ftp
 from post_processing import perform_fft_and_save_planes_solid
 from azimuthal_average_fft import save_lines_fft_averaged
+from ftp import height_map_from_phase_map
 import os
 import numpy as np
 import numpy.ma as ma
@@ -37,9 +38,9 @@ from scipy import signal
 from scipy.signal.windows import tukey
 from unwrap import unwrap
 
-measurements_path = '/Volumes/T7 Shield/2024-07-16/sweep-bateur-mur/'
+measurements_path = '/Volumes/T7/2025-04-04/'
 
-folder_name = 'sweep-a400-f1-20-t60'
+folder_name = 'sweep-a100-f1-5-3min'
 ftp_im_path = measurements_path + f'def-{folder_name}/'
 print(folder_name)
 
@@ -68,7 +69,7 @@ Slin0, Scol0 = np.shape(gray)
 Slin = lin_max_idx - lin_min_idx
 Scol = col_max_idx - col_min_idx
 
-def_files = natsorted(glob.glob(os.path.join(ftp_im_path, '*.tiff')), key=lambda y: y.lower())
+def_files = natsorted(glob.glob(os.path.join(ftp_im_path, '*.bmp')), key=lambda y: y.lower())
 N_defs = len(def_files)
 
 resfactor = np.mean(ref)/np.mean(gray)
@@ -85,7 +86,11 @@ wavelength_pix = np.mean(np.diff(peaks))
 pspp = pixel_size*wavelength_pix
 
 
-frame = 0
+frame = 7200
+th = 0.1
+
+
+
 
 def_image = sio.imread(def_files[frame])
 def_image = def_image.astype(float)
@@ -132,7 +137,7 @@ lin = nx//2
 # phase  = np.unwrap(np.angle(Ny))
 
 
-pixel_size = 0.4166666666666667/1000
+#pixel_size = 0.4166666666666667/1000
 xf = gray.shape[0]*pixel_size
 
 fsize = 24
@@ -215,23 +220,23 @@ plt.show()
 # FILTER
 
 # Without supressing the gray
-fY0 = np.fft.fft(ref[lin,:])
-fY = np.fft.fft(def_image[lin,:])
-
-imax=np.argmax(np.abs(fY0[9:int(np.floor(ny/2))]))
-ifmax=imax+9
-
-HW=np.round(ifmax*th)
-W=2*HW+1
-win=tukey(int(W),ns)
-gaussfilt1D= np.zeros(ny)
-gaussfilt1D[int(ifmax-HW):int(ifmax-HW+W)]=win
-
-g_without = gaussfilt1D
-
-# Multiplication by the filter
-Nfy0 = fY0*gaussfilt1D
-Nfy = fY*gaussfilt1D
+# fY0 = np.fft.fft(ref[lin,:])
+# fY = np.fft.fft(def_image[lin,:])
+# 
+# imax=np.argmax(np.abs(fY0[9:int(np.floor(ny/2))]))
+# ifmax=imax+9
+# 
+# HW=np.round(ifmax*th)
+# W=2*HW+1
+# win=tukey(int(W),ns)
+# gaussfilt1D= np.zeros(ny)
+# gaussfilt1D[int(ifmax-HW):int(ifmax-HW+W)]=win
+# 
+# g_without = gaussfilt1D
+# 
+# # Multiplication by the filter
+# Nfy0 = fY0*gaussfilt1D
+# Nfy = fY*gaussfilt1D
 
 # Supressing the gray
 fY0_mg = np.fft.fft(ref_m_gray[lin,:])
@@ -253,17 +258,17 @@ g_with = gaussfilt1D
 Nfy0_mg = fY0_mg*gaussfilt1D
 Nfy_mg = fY_mg*gaussfilt1D
 
-plt.figure(figsize=(4,4))
-plt.plot(np.abs(fY0), c='royalblue', label='Reference')
-plt.plot(g_without*np.max(np.abs(fY0)), c='k', label='Filter')
-#plt.plot(np.abs(Nfy0), c='royalblue', label='Reference')
-#plt.plot(np.abs(Nfy), c='firebrick', label='Deformed')
-plt.grid(alpha=0.6)
-plt.xlim(xmax=300)
-plt.legend()
-plt.tight_layout()
-plt.title('Not supressing the gray')
-plt.show()
+# plt.figure(figsize=(4,4))
+# plt.plot(np.abs(fY0), c='royalblue', label='Reference')
+# plt.plot(g_without*np.max(np.abs(fY0)), c='k', label='Filter')
+# #plt.plot(np.abs(Nfy0), c='royalblue', label='Reference')
+# #plt.plot(np.abs(Nfy), c='firebrick', label='Deformed')
+# plt.grid(alpha=0.6)
+# plt.xlim(xmax=300)
+# plt.legend()
+# plt.tight_layout()
+# plt.title('Not supressing the gray')
+# plt.show()
 
 
 plt.figure(figsize=(4,4))
@@ -278,15 +283,15 @@ plt.title('Supressing the gray')
 plt.tight_layout()
 plt.show()
 
-plt.figure(figsize=(4,4))
-plt.plot(np.abs(Nfy0), c='royalblue', label='Reference')
-plt.plot(np.abs(Nfy), c='firebrick', label='Deformed')
-plt.grid(alpha=0.6)
-plt.xlim(xmax=300)
-plt.legend()
-plt.tight_layout()
-plt.title('Not supressing the gray')
-plt.show()
+# plt.figure(figsize=(4,4))
+# plt.plot(np.abs(Nfy0), c='royalblue', label='Reference')
+# plt.plot(np.abs(Nfy), c='firebrick', label='Deformed')
+# plt.grid(alpha=0.6)
+# plt.xlim(xmax=300)
+# plt.legend()
+# plt.tight_layout()
+# plt.title('Not supressing the gray')
+# plt.show()
 
 
 plt.figure(figsize=(4,4))
@@ -304,12 +309,12 @@ plt.show()
 
 # Without supressing the gray
 # Inverse Fourier transform of both images
-Ny0 = np.fft.ifft(Nfy0)
-Ny  = np.fft.ifft(Nfy)
-
-phase0 = np.unwrap(np.angle(Ny0))
-phase  = np.unwrap(np.angle(Ny))
-dphase = (phase-phase0)
+# Ny0 = np.fft.ifft(Nfy0)
+# Ny  = np.fft.ifft(Nfy)
+# 
+# phase0 = np.unwrap(np.angle(Ny0))
+# phase  = np.unwrap(np.angle(Ny))
+# dphase = (phase-phase0)
 
 #plt.figure()
 #plt.plot(np.real(Ny0))
@@ -327,8 +332,38 @@ phase_mg  = np.unwrap(np.angle(Ny_mg))
 dphase_mg = (phase_mg-phase0_mg)
 
 plt.figure()
-plt.plot(dphase, c='royalblue', label='Not supressing the gray')
+#plt.plot(dphase, c='royalblue', label='Not supressing the gray')
 plt.plot(dphase_mg, c='gray', label='Supressing the gray')
 plt.grid(alpha=0.6)
 plt.legend()
+plt.title('dphase')
+plt.show()
+
+height = height_map_from_phase_map(dphase_mg, L, D, pspp)
+
+plt.figure(figsize=(7,4))
+plt.plot(height*1e3, c='gray')
+plt.grid(alpha=0.6)
+plt.ylabel('$h$ [mm]')
+plt.ylim([-1,1])
+plt.title('n = '+str(n)+', th = ' +str(th))
+plt.tight_layout()
+plt.show()
+
+ft = np.fft.fftshift(np.fft.fft(height))
+kx = np.fft.fftshift(np.fft.fftfreq(len(height), pixel_size))
+
+# Complete reldisp 
+g = 9.82
+gamma = 72e-3
+rho = 1000
+def f_reldisp(k, height):
+    return np.sqrt((g*k + (gamma/rho)*k**3)*np.tanh(k*height))/(2*np.pi)
+
+f = f_reldisp(kx, 3/100)
+
+plt.figure()
+plt.plot(f, np.abs(ft))
+plt.grid()
+plt.xlim([0,5])
 plt.show()
